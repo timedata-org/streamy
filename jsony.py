@@ -10,11 +10,17 @@ class State(object):
     def apply(self, ch):
         before = self._state
         self._state = self._state(ch)
-        return not stack and before != self._between
+        return not self._stack and before != self._between
 
     def _between(self, ch):
+        if isspace(ch):
+            return self._between
+
+        if ch.isnumeric():
+            return self._number
+
         if isword(ch):
-            return self.word
+            return self._word
 
         if ch == '{':
             self.stack.push(ch)
@@ -22,4 +28,17 @@ class State(object):
 
         if ch == '[':
             self.stack.push(ch)
-            return self._object
+            return self._list
+
+        if char == '"':
+            self.stack.push(ch)
+            return self._string
+
+    def _word(self, ch):
+        pass
+
+    def _object(self, ch):
+        pass
+
+    def _list(self, ch):
+        pass
