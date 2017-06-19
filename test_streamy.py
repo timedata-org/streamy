@@ -1,13 +1,13 @@
-import json, jsony, unittest
+import json, streamy, unittest
 
 
-class JsonyTest(unittest.TestCase):
+class StreamyTest(unittest.TestCase):
     def assert_stream(self, s, *expected):
-        return self.assertEqual(list(jsony.stream(s)), list(expected))
+        return self.assertEqual(list(streamy.stream(s)), list(expected))
 
     def stream_fails(self, s):
         with self.assertRaises(ValueError):
-            list(jsony.stream(s))
+            list(streamy.stream(s))
 
     def test_empty(self):
         for s in '', ' ', '   ', '\n \n ':
