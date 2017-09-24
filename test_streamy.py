@@ -6,8 +6,11 @@ class StreamyTest(unittest.TestCase):
         return self.assertEqual(list(streamy.stream(s)), list(expected))
 
     def stream_fails(self, s):
-        with self.assertRaises(ValueError):
+        try:
             list(streamy.stream(s))
+        except ValueError:
+            return
+        raise Exception
 
     def test_empty(self):
         for s in '', ' ', '   ', '\n \n ':
@@ -26,6 +29,10 @@ class StreamyTest(unittest.TestCase):
     def test_lists(self):
         self.assert_stream(' [   ]    ["foo", 1, "bar", null]  ',
                            [], ["foo", 1, "bar", None])
+
+    def test_file(self):
+        with open('test_file.txt') as fp:
+            self.assert_stream(fp, {'a':'b'}, {'c': 'd'})
 
     def test_error(self):
         self.stream_fails(']')

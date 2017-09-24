@@ -1,4 +1,4 @@
-import io, json, re
+import io, json, platform, re
 
 """
 Emit a stream of valid JSON from a seekable file pointer like you'd get from
@@ -12,7 +12,22 @@ See https://stackoverflow.com/a/44190177/43839
 #
 #   ValueError: Extra data: line 1 column 4 - line 1 column 6 (char 3 - 5)
 
-_MATCH_EXTRA_DATA_ERROR = re.compile(r'Extra data: .*\(char (\d+).*\)').match
+_MATCH_EXTRA_DATA_ERROR = re.compile(r'Extra data: .*char (\d+).*').match
+
+
+if platform.python_version_tuple()[0] == '3':
+    def _to_stream(fp):
+        return io.StringIO(fp) if isinstance(fp, str) else fp
+
+else:
+    def _to_stream(fp):
+        if isinstance(fp, unicode):  # noqa: F821
+            return io.StringIO(fp)
+
+        if isinstance(fp, str):
+            return io.StringIO(unicode(fp))  # noqa: F821
+
+        return fp
 
 
 def get_end_pos(e):
@@ -38,8 +53,7 @@ def stream(fp, json_lines=False, **kwds):
         json_lines: if true, each line holds at most one JSON expression.
         kwds: keywords to pass to json.load or json.loads.
     """
-    if isinstance(fp, str):
-        fp = io.StringIO(fp)
+    fp = _to_stream(fp)
 
     if json_lines:
         for i in fp:
@@ -48,7 +62,9 @@ def stream(fp, json_lines=False, **kwds):
                 yield json.loads(i, **kwds)
         return
 
-    assert fp.seekable(), "Streams must be json_lines or seekable"
+    seek = getattr(fp, 'seek', None)
+    if not seek:
+        raise ValueError('Streams must be json_lines or seekable')
 
     start_pos = 0
     while True:
